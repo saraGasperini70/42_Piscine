@@ -6,9 +6,7 @@ int ft_strlen(char *str)
     
     count = 0;
     while (str[count])
-    {
         count++;
-    }
     return(count);
 }
 
@@ -19,8 +17,8 @@ char    *ft_strrev(char *str)
     char swap;
     
     i = 0;
-    j = ft_strlen(str) -1;
-    while (j > 1)
+    j = ft_strlen(str) - 1;
+    while (i < j / 2)
     {
         swap = str[i];
         str[i] = str[j];
@@ -34,6 +32,6 @@ char    *ft_strrev(char *str)
 int main()
 {
     char c[] = "abbiamo l'esame";
-    printf("Prima: %s", c);
-    printf("Dopo: %s", ft_strrev(c));
+    printf("Prima: %s\n", c);
+    printf("Dopo: %s\n", ft_strrev(c));
 }
