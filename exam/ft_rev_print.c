@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_rev_print.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sgasperi <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: sgasperi <sgasperi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:04:24 by sgasperi          #+#    #+#             */
-/*   Updated: 2022/12/08 11:29:10 by sgasperi         ###   ########.fr       */
+/*   Updated: 2024/03/02 12:15:55 by sgasperi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,22 +24,17 @@ int	ft_strlen(char *str)
 	return (i);
 }
 
-char	*ft_rev_print(char *str)
+int	main(int ac, char **av)
 {
-	int	len;
+	int	i;
 
-	len = ft_strlen(str);
-	len--;
-	while (len >= 0)
+	if (ac == 2)
 	{
-		write (1, &str[len], 1);
-		len--;
+		i = ft_strlen(av[1]);
+		while (i > 0)
+		{
+			write (1, &av[1][--i], 1);			
+		}		
 	}
-	return (str);
-}
-
-int	main()
-{
-	char c[] = "Hello World";
-	ft_rev_print(c);
+	return (0);
 }
