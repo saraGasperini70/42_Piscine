@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
+
 int ft_strlen(char *str)
 {
     int count;
@@ -14,24 +15,15 @@ char    *ft_strrev(char *str)
 {
     int i;
     int j;
-    char swap;
-    
-    i = 0;
-    j = ft_strlen(str) - 1;
-    while (i < j / 2)
+    char    swap;
+
+    i = - 1;
+    j = ft_strlen(str);
+    while (++i < j / 2)
     {
         swap = str[i];
-        str[i] = str[j];
-        str[j] = swap;
-        i++;
-        j--;
+        str[i] = str[j - 1 - i];
+        str[j - 1 - i] = swap;
     }
-    return(str);
-}
-
-int main()
-{
-    char c[] = "abbiamo l'esame";
-    printf("Prima: %s\n", c);
-    printf("Dopo: %s\n", ft_strrev(c));
+    return (str);
 }
