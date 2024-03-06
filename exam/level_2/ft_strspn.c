@@ -2,31 +2,27 @@
 #include <string.h>
 #include <stdio.h>
 
-size_t	ft_strspn(const char *s, const char *accept)
+char	*ft_strchr(const char *s, char c)
 {
-	int		i;
-	int		j;
-	size_t	result;
-
-	i = 0;
-	result = 0;
-	while (s[i] != '\0')
+	while (*s != '\0')
 	{
-		j = 0;
-		while (accept[j] != '\0')
-		{
-			if (s[i] != accept[j])
-				break ;
-			j++;
-		}
-		i++;
+		if (*s == c)
+			return (char *)s;
+		++s;
 	}
-	return (i);
+	return (NULL);
 }
 
-int	main(void)
+size_t	ft_strspn(const char *s, const char *accept)
 {
-	printf("strspn: %lu\n", strspn("hello world", "hell"));
-	printf("ft_strspn: %lu\n", ft_strspn("hello world", "hell"));
-	return (0);
+	size_t	result;
+
+	result = 0;
+	while (s[result] != '\0')
+	{
+		if (ft_strchr(accept, s[result]) == 0)
+			break ;
+		result++;
+	}
+	return (result);
 }
