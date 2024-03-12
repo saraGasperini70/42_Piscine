@@ -2,15 +2,16 @@
 
 void	write_number(int i)
 {
+	char	*digit = "0123456789";
 	if (i > 9)
 		write_number(i / 10);
-	write(1, &"0123456789"[i % 10], 1);
+	write(1, &digit[i % 10], 1);
 }
 
 int	ft_matrlen(char **av)
 {
 	int	i;
-	
+
 	i = 0;
 	while (av[i])
 		i++;
