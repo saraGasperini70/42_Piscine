@@ -1,13 +1,12 @@
-/*strjoin, strdup*/
 #include "get_next_line.h"
 
-char	ft_strchr(char *str, char c)
+char	*ft_strchr(char *str, char c)
 {
 	int	i = 0;
 	while (str[i])
 	{
 		if (str[i] == c)
-			return (str[i]);
+			return ((char *)str);
 		i++;
 	}
 	return (NULL);
@@ -37,3 +36,38 @@ char	*ft_strlcpy(char *dst, char *src, int dstlen)
 	}
 	return (dst);
 }
+
+char	*ft_strdup(char *src)
+{
+	char	*dst;
+
+	dst = malloc(sizeof(char *) * ft_strlen(src));
+	if (!dst)
+		return (NULL);
+	dst = ft_strlcpy(dst, src, ft_strlen(src));
+	return (dst);
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*result;
+	int	i = 0;
+	int	j = 0;
+	result = malloc(sizeof(char *) * (ft_strlen(s1) + ft_strlen(s2)));
+
+	while (s1[i])
+	{
+		result[j] = s1[i];
+		i++;
+		j++;
+	}
+	i = 0;
+	while (s2[i])
+	{
+		result[j] = s2[i];
+		i++;
+		j++;
+	}
+	return (result);
+}
+
