@@ -71,3 +71,17 @@ char	*ft_strjoin(char *s1, char *s2)
 	return (result);
 }
 
+char	*get_next_line(int fd)
+{
+	static char	buf[BUFFER_SIZE + 1];
+	char		*line;
+	char		*newline;
+	int			to_copy;
+	int			readcount;
+
+	line = ft_strdup(buf);
+	while (line && (readcount = read(fd, buf, BUFFER_SIZE)) > 0)
+	{
+
+	}
+}
