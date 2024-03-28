@@ -20,21 +20,22 @@ int	ft_strlen(char *str)
 	return (i);
 }
 
-char	*ft_strlcpy(char *dst, char *src, int dstlen)
+size_t	ft_strlcpy(char *dst, char *src, int dstlen)
 {
 	int	i = 0;
 	int	srclen = ft_strlen(src);
 
 	if (dstlen > 0)
 	{
-		while(i < srclen && i < dstlen)
+		while(i < srclen && i < dstlen - 1)
 		{
 			dst[i] = src[i];
+			write (1, &dst[i], 1);
 			i++;
 		}
 		dst[i] = '\0';
 	}
-	return (dst);
+	return (srclen);
 }
 
 char	*ft_strdup(char *src)
@@ -43,31 +44,29 @@ char	*ft_strdup(char *src)
 
 	dst = malloc(sizeof(char *) * ft_strlen(src));
 	if (!dst)
+	{
 		return (NULL);
-	dst = ft_strlcpy(dst, src, ft_strlen(src));
+	}
+	ft_strlcpy(dst, src, ft_strlen(src));
 	return (dst);
 }
 
-char	*ft_strjoin(char *s1, char *s2)
+char	*ft_strjoin(char *s1, char *s2, size_t len)
 {
 	char	*result;
-	int	i = 0;
-	int	j = 0;
-	result = malloc(sizeof(char *) * (ft_strlen(s1) + ft_strlen(s2)));
+	int		len1;
+	int		len2;
 
-	while (s1[i])
-	{
-		result[j] = s1[i];
-		i++;
-		j++;
-	}
-	i = 0;
-	while (s2[i])
-	{
-		result[j] = s2[i];
-		i++;
-		j++;
-	}
+	if (!s1 || !s2)
+		return (NULL);
+	len1 = ft_strlen(s1);
+	len2 = len;
+	result = malloc(sizeof(char *) * (len1 + len2));
+	if (!result)
+		return (NULL);
+	ft_strlcpy(result, s1, len1 + 1);
+	ft_strlcpy(result + len1, s2, len2 + 1);
+	free(s1);
 	return (result);
 }
 
@@ -80,8 +79,24 @@ char	*get_next_line(int fd)
 	int			readcount;
 
 	line = ft_strdup(buf);
-	while (line && (readcount = read(fd, buf, BUFFER_SIZE)) > 0)
+	while (!(ft_strchr(line, '\n')) && (readcount = read(fd, buf, BUFFER_SIZE) > 0))
 	{
-
+		buf[readcount] = '\0';
+		line = ft_strjoin(line, buf, readcount);
 	}
+	if (ft_strlen(line) == 0)
+		return (free(line), NULL);
+	newline = ft_strchr(line, '\n');
+	if (newline != NULL)
+	{
+		to_copy = newline - line + 1;
+		ft_strlcpy(buf, newline + 1, BUFFER_SIZE + 1);
+	}
+	else
+	{
+		to_copy = ft_strlen(line);
+		ft_strlcpy(buf, "", BUFFER_SIZE + 1);
+	}
+	line[to_copy] = '\0';
+	return (line);
 }
