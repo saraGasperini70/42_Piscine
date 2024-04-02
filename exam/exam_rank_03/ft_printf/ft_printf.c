@@ -60,5 +60,6 @@ int	main(void)
 {
 	ft_printf("Hello, %s, %d, %x\n", "World", 70, 70);
 	printf("Hello, %s, %d, %x\n", "World", 70, 70);
+	printf("%p\n", NULL);
 	return (0);
 }
