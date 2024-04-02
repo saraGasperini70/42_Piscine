@@ -58,7 +58,7 @@ int	ft_printf(const char *format, ...)
 
 int	main(void)
 {
-	ft_printf("Hello, %s, %d, %x\n", "World", 70, 300);
-	printf("Hello, %s, %d, %x\n", "World", 70, 300);
+	ft_printf("Hello, %s, %d, %x\n", "World", 70, 70);
+	printf("Hello, %s, %d, %x\n", "World", 70, 70);
 	return (0);
 }
