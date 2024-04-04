@@ -41,13 +41,13 @@ int	ft_printf(const char *prompt, ...)
 	{
 		if (prompt[i] == '%' && (prompt[i + 1] == 's' || prompt[i + 1] == 'd' || prompt[i + 1] == 'x'))
 		{
-			if (prompt[i + 1] == 's')
-				result += ft_putstr(va_arg(start, char *));
-			if (prompt[i + 1] == 'd')
-				ft_putnbr_base((long long int)va_arg(start, int), 10, &result);
-			if (prompt[i + 1] == 'x')
-				ft_putnbr_base((long long int)va_arg(start, unsigned int), 16, &result);
 			i++;
+			if (prompt[i] == 's')
+				result += ft_putstr(va_arg(start, char *));
+			if (prompt[i] == 'd')
+				ft_putnbr_base((long long int)va_arg(start, int), 10, &result);
+			if (prompt[i] == 'x')
+				ft_putnbr_base((long long int)va_arg(start, unsigned int), 16, &result);
 		}
 		else
 			result += write (1, &prompt[i], 1);
