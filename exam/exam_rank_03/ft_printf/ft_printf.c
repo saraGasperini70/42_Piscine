@@ -2,17 +2,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-int	ft_putstr(char *str)
+void	ft_putstr(char *str, int *len)
 {
-	int	i = 0;
 	if (!str)
-		return (write (1, "(null)", 6));
+		str = "(null)";
 	while (*str)
 	{
-		i += write (1, str, 1);
+		*len += write (1, str, 1);
 		str++;
 	}
-	return (i);
 }
 
 void	ft_putnbr_base(long long int nb, int base, int *len)
@@ -43,7 +41,7 @@ int	ft_printf(const char *prompt, ...)
 		{
 			i++;
 			if (prompt[i] == 's')
-				result += ft_putstr(va_arg(start, char *));
+				ft_putstr(va_arg(start, char *), &result);
 			if (prompt[i] == 'd')
 				ft_putnbr_base((long long int)va_arg(start, int), 10, &result);
 			if (prompt[i] == 'x')
@@ -56,10 +54,10 @@ int	ft_printf(const char *prompt, ...)
 	}
 	return (va_end(start), result);
 }
+
 /*
 #include <stdio.h>
 #include <stdarg.h>
-
 int
 	main(void)
 {
@@ -134,5 +132,4 @@ int
 	ft_printf("%d\n", ft_printf("%s%s%s%s\n", "", "toto", "wiurwuyrhwrywuier", NULL));
 	printf("%d\n", printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
 	ft_printf("%d\n", ft_printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
-}
-*/
+}*/
