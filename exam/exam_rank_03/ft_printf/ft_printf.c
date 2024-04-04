@@ -1,65 +1,138 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
-
-int	ft_putnbr_base(int nb, int base)
+#include <stdlib.h>
+int	ft_putstr(char *str)
 {
-	char	*map = "0123456789abcdef";
-	int		i = 0;
+	int	i = 0;
+	if (!str)
+		return (write (1, "(null)", 6));
+	while (*str)
+	{
+		i += write (1, str, 1);
+		str++;
+	}
+	return (i);
+}
+
+void	ft_putnbr_base(long long int nb, int base, int *len)
+{
+	char	*base_str = "0123456789abcdef";
+
 
 	if (nb < 0)
 	{
 		nb *= -1;
-		write (1, "-", 1);
+		*len += write (1, "-", 1);
 	}
-
 	if (nb >= base)
-		i += ft_putnbr_base(nb / base, base);
-	i += write (1, &map[nb % base], 1);
-	return (i);
+		ft_putnbr_base(nb / base, base, len);
+	*len += write (1, &base_str[nb % base], 1);
 }
 
-int	ft_putstr(char *str)
-{
-	int	i = 0;
-
-	if (!str)
-		str = "(null)";
-	while (str[i])
-		i += write(1, &str[i], 1);
-	return (i);
-}
-
-int	ft_printf(const char *format, ...)
+int	ft_printf(const char *prompt, ...)
 {
 	va_list	start;
-	va_start(start, format);
 	int	i = 0;
-	int	j = 0;
+	int	result = 0;
 
-	while (format[i])
+	va_start(start, prompt);
+	while (prompt[i])
 	{
-		if (format[i] == '%' && (format[i + 1] == 's' || format[i + 1] == 'd' || format[i + 1] == 'x'))
+		if (prompt[i] == '%' && (prompt[i + 1] == 's' || prompt[i + 1] == 'd' || prompt[i + 1] == 'x'))
 		{
-			if (format[i + 1] == 's')
-				j += ft_putstr(va_arg(start, char *));
-			if (format[i + 1] == 'd')
-				j += ft_putnbr_base(va_arg(start, int), 10);
-			if (format[i + 1] == 'x')
-				j += ft_putnbr_base(va_arg(start, int), 16);
+			if (prompt[i + 1] == 's')
+				result += ft_putstr(va_arg(start, char *));
+			if (prompt[i + 1] == 'd')
+				ft_putnbr_base((long long int)va_arg(start, int), 10, &result);
+			if (prompt[i + 1] == 'x')
+				ft_putnbr_base((long long int)va_arg(start, unsigned int), 16, &result);
 			i++;
 		}
 		else
-			write (1, &format[i], 1);
+			result += write (1, &prompt[i], 1);
 		i++;
-	}
-	return (j);
-}
 
-int	main(void)
-{
-	ft_printf("Hello, %s, %d, %x\n", "World", 70, 70);
-	printf("Hello, %s, %d, %x\n", "World", 70, 70);
-	printf("%p\n", NULL);
-	return (0);
+	}
+	return (va_end(start), result);
 }
+/*
+#include <stdio.h>
+#include <stdarg.h>
+
+int
+	main(void)
+{
+	int	r;
+
+	r = 0;
+	printf("%d\n", printf("Simple test\n"));
+	ft_printf("%d\n", ft_printf("Simple test\n"));
+	printf("%d\n", printf(""));
+	ft_printf("%d\n", ft_printf(""));
+	printf("%d\n", printf("--Format---"));
+	ft_printf("%d\n", ft_printf("--Format---"));
+	printf("%d\n", printf("\n"));
+	ft_printf("%d\n", ft_printf("\n"));
+	printf("%d\n", printf("%d\n", 0));
+	ft_printf("%d\n", ft_printf("%d\n", 0));
+	printf("%d\n", printf("%d\n", 42));
+	ft_printf("%d\n", ft_printf("%d\n", 42));
+	printf("%d\n", printf("%d\n", 1));
+	ft_printf("%d\n", ft_printf("%d\n", 1));
+	printf("%d\n", printf("%d\n", 5454));
+	ft_printf("%d\n", ft_printf("%d\n", 5454));
+	printf("%d\n", printf("%d\n", (int)2147483647));
+	ft_printf("%d\n", ft_printf("%d\n", (int)2147483647));
+	printf("%d\n", printf("%d\n", (int)2147483648));
+	ft_printf("%d\n", ft_printf("%d\n", (int)2147483648));
+	printf("%d\n", printf("%d\n", (int)-2147483648));
+	ft_printf("%d\n", ft_printf("%d\n", (int)-2147483648));
+	printf("%d\n", printf("%d\n", (int)-2147483649));
+	ft_printf("%d\n", ft_printf("%d\n", (int)-2147483649));
+	printf("%d\n", printf("\n"));
+	ft_printf("%d\n", ft_printf("\n"));
+	printf("%d\n", printf("%x\n", 0));
+	ft_printf("%d\n", ft_printf("%x\n", 0));
+	printf("%d\n", printf("%x\n", 42));
+	ft_printf("%d\n", ft_printf("%x\n", 42));
+	printf("%d\n", printf("%x\n", 1));
+	ft_printf("%d\n", ft_printf("%x\n", 1));
+	printf("%d\n", printf("%x\n", 5454));
+	ft_printf("%d\n", ft_printf("%x\n", 5454));
+	printf("%d\n", printf("%x\n", (int)2147483647));
+	ft_printf("%d\n", ft_printf("%x\n", (int)2147483647));
+	printf("%d\n", printf("%x\n", (int)2147483648));
+	ft_printf("%d\n", ft_printf("%x\n", (int)2147483648));
+	printf("%d\n", printf("%x\n", (int)-2147483648));
+	ft_printf("%d\n", ft_printf("%x\n", (int)-2147483648));
+	printf("%d\n", printf("%x\n", (int)-2147483649));
+	ft_printf("%d\n", ft_printf("%x\n", (int)-2147483649));
+	printf("%d\n", printf("%x\n", (int)0xFFFFFFFF));
+	ft_printf("%d\n", ft_printf("%x\n", (int)0xFFFFFFFF));
+	printf("%d\n", printf("\n"));
+	ft_printf("%d\n", ft_printf("\n"));
+	printf("%d\n", printf("%s\n", ""));
+	ft_printf("%d\n", ft_printf("%s\n", ""));
+	printf("%d\n", printf("%s\n", "toto"));
+	ft_printf("%d\n", ft_printf("%s\n", "toto"));
+	printf("%d\n", printf("%s\n", "wiurwuyrhwrywuier"));
+	ft_printf("%d\n", ft_printf("%s\n", "wiurwuyrhwrywuier"));
+	printf("%d\n", printf("%s\n", NULL));
+	ft_printf("%d\n", ft_printf("%s\n", NULL));
+	printf("%d\n", printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+	ft_printf("%d\n", ft_printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+	printf("%d\n", printf("\n--Mixed---\n"));
+	ft_printf("%d\n", ft_printf("\n--Mixed---\n"));
+	printf("%d\n", printf("%d%x%d%x%d%x%d%x\n", 0, 0, 42, 42, 2147483647, 2147483647, (int)-2147483648, (int)-2147483648));
+	ft_printf("%d\n", ft_printf("%d%x%d%x%d%x%d%x\n", 0, 0, 42, 42, 2147483647, 2147483647, (int)-2147483648, (int)-2147483648));
+	printf("%d\n", printf("-%d-%x-%d-%x-%d-%x-%d-%x-\n", 0, 0, 42, 42, 2147483647, 2147483647, (int)-2147483648, (int)-2147483648));
+	ft_printf("%d\n", ft_printf("-%d-%x-%d-%x-%d-%x-%d-%x-\n", 0, 0, 42, 42, 2147483647, 2147483647, (int)-2147483648, (int)-2147483648));
+	printf("%d\n", printf("\n"));
+	ft_printf("%d\n", ft_printf("\n"));
+	printf("%d\n", printf("%s%s%s%s\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+	ft_printf("%d\n", ft_printf("%s%s%s%s\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+	printf("%d\n", printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+	ft_printf("%d\n", ft_printf("-%s-%s-%s-%s-\n", "", "toto", "wiurwuyrhwrywuier", NULL));
+}
+*/
