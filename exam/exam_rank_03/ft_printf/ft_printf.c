@@ -50,7 +50,6 @@ int	ft_printf(const char *prompt, ...)
 		else
 			result += write (1, &prompt[i], 1);
 		i++;
-
 	}
 	return (va_end(start), result);
 }
