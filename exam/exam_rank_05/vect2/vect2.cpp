@@ -46,10 +46,11 @@ vect2 &vect2::operator+=(const vect2 &src) {
     return *this;
 }
 
-vect2 &vect2::operator+(const vect2 &src) {
-    vect2 &temp(*this);
-    temp += src;
-    return (temp);
+vect2 &vect2::operator+(const vect2 &src) const {
+    vect2 *temp = new vect2;
+    temp->a = this->a + src.a;
+    temp->b = this->b + src.a;
+    return (*temp);
 }
 
 vect2 &vect2::operator-=(const vect2 &src) {
@@ -83,16 +84,14 @@ vect2 &vect2::operator*=(int i) {
 }
 
 vect2 &vect2::operator*(const vect2 &src) {
-    vect2 &temp(*this);
-    temp *= src;
-    return (temp);
+    vect2 *temp = new vect2 (this->a * src.a, this->b * src.b);
+    return (*temp);
 }
 
-vect2 &vect2::operator*(int i) {
-    vect2 &temp(*this);
-    temp.a *= i;
-    temp.b *= i;
-    return (temp);
+vect2 vect2::operator*(int i) const {
+    vect2 *temp = new vect2 (this->a * i, this->b * i);
+    std::cout << this->a * i << " " << this->b * i << std::endl;
+    return (*temp);
 }
 
 bool vect2::operator==(const vect2 &src) {
@@ -117,7 +116,20 @@ int vect2::operator[](int i) const {
         return this->b;
 }
 
-std::ostream &operator<<(std::ostream &os, vect2 &src) {
+vect2 &vect2::operator=(const vect2 &src) {
+    if (*this != src) {
+        this->a = src.a;
+        this->b = src.b;
+    }
+    return *this;
+}
+
+std::ostream &operator<<(std::ostream &os, const vect2 &src) {
     std::cout << "{" << src[0] << ", " << src[1] << "}";
     return os;
+}
+
+vect2 operator*(int i, const vect2 &src) {
+    vect2 temp(src * i);
+    return (temp);
 }
