@@ -5,14 +5,17 @@ std::string intToStr(int i) {
     ss << i;
     std::string result;
     ss >> result;
-    std::cout << result << std::endl;
+    // std::cout << result << std::endl;
     return (result);
 }
 
 int strToInt(std::string str) {
     int result = 0;
     for (size_t i = 0; i < str.length(); i++) {
-        result += (str[i] - '0') * 10;
+        if (str.length() == 1)
+            result = (str[i] - '0');
+        else
+            result += (str[i] - '0') * 10;
     }
     return (result);
 }
@@ -43,6 +46,8 @@ std::string addition(const std::string str1, const std::string str2) {
             carry = res / 10;
             res %= 10;
         }
+        else 
+            carry = 0;
         result += intToStr(res);
      }
     if (carry != 0) {
@@ -53,7 +58,7 @@ std::string addition(const std::string str1, const std::string str2) {
 
 bigint::bigint() { this->arb = "0"; }
 
-bigint::bigint(bigint &src) {
+bigint::bigint(const bigint &src) {
     this->arb = src.arb;
 }
 
@@ -70,4 +75,67 @@ std::string bigint::getArb() const {
 bigint &bigint::operator+=(const bigint &src) {
     this->arb = addition(this->arb, src.arb);
     return *this;
+}
+
+bigint bigint::operator+(const bigint &src) const {
+    bigint temp(src);
+    temp += *this;
+    return temp;
+}
+
+bigint bigint::operator++() {
+    *this += bigint(1);
+    return *this;
+}
+
+bigint &bigint::operator++(int) {
+    bigint *temp = this;
+    *(this) = *(this) + bigint(1);
+    return *temp;
+}
+
+bigint bigint::operator<<(unsigned int i) const {
+    bigint temp = * this;
+    for (size_t j = 0; j < i; j++) {
+        temp.arb.push_back('0');
+    }
+    return (temp);
+}
+
+bigint bigint::operator<<=(unsigned int i) {
+    *(this) = *(this) << i;
+    return (*this);
+}
+
+bigint bigint::operator<<=(const bigint i) {
+    *(this) <<= strToInt(i.arb);
+    return *(this);
+}
+
+bigint bigint::operator>>(unsigned int i) const {
+    bigint temp = * this;
+    if (i > temp.arb.length()) {
+        std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
+        temp.arb = '0';
+    }
+    else {
+        std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
+        temp.arb.erase(temp.arb.length() - i, i);
+    }
+    return temp;
+}
+
+bigint bigint::operator>>=(unsigned int i) {
+    *(this) = *(this) >> i;
+    return *(this);
+}
+        
+bigint bigint::operator>>=(const bigint i) {
+    *(this) = *(this) >> strToInt(i.arb);
+    return *(this);
+}
+
+std::ostream &operator<<(std::ostream &os, const bigint &src) {
+    os << src.getArb();
+    return os;
 }
