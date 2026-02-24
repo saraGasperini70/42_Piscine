@@ -12,12 +12,9 @@ std::string intToStr(int i) {
 int strToInt(std::string str) {
     int result = 0;
     for (size_t i = 0; i < str.length(); i++) {
-        if (str.length() == 1)
-            result = (str[i] - '0');
-        else
-            result += (str[i] - '0') * 10;
+        result = result * 10 + (str[i] - '0');
     }
-    return (result);
+    return result;
 }
 
 std::string reverse(std::string str) { //This is working
@@ -31,7 +28,7 @@ std::string addition(const std::string str1, const std::string str2) {
     std::string rev1 = reverse(str1);
     std::string rev2 = reverse(str2);
     std::string result;
-    if (rev1.length() > rev2.length()) 
+    if (rev1.length() > rev2.length())
         rev2.insert(rev2.end(), rev1.length() - rev2.length(), '0');
     else if (rev2.length() > rev1.length())
         rev1.insert(rev1.end(), rev2.length() - rev1.length(), '0');
@@ -46,7 +43,7 @@ std::string addition(const std::string str1, const std::string str2) {
             carry = res / 10;
             res %= 10;
         }
-        else 
+        else
             carry = 0;
         result += intToStr(res);
      }
@@ -83,15 +80,15 @@ bigint bigint::operator+(const bigint &src) const {
     return temp;
 }
 
-bigint bigint::operator++() {
-    *this += bigint(1);
+bigint &bigint::operator++() {
+    *this += 1;
     return *this;
 }
 
-bigint &bigint::operator++(int) {
-    bigint *temp = this;
-    *(this) = *(this) + bigint(1);
-    return *temp;
+bigint bigint::operator++(int) {
+    bigint temp = *this;
+    *this += 1;
+    return temp;
 }
 
 bigint bigint::operator<<(unsigned int i) const {
@@ -115,24 +112,48 @@ bigint bigint::operator<<=(const bigint i) {
 bigint bigint::operator>>(unsigned int i) const {
     bigint temp = * this;
     if (i > temp.arb.length()) {
-        std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
+        //std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
         temp.arb = '0';
     }
     else {
-        std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
+        //std::cout << "i: " << i << "and temp.arb.length:" << temp.arb.length() << std::endl;
         temp.arb.erase(temp.arb.length() - i, i);
     }
     return temp;
 }
 
+bigint bigint::operator<<(const bigint i) const {
+    return (*this) << strToInt(i.arb);
+}
+
+
 bigint bigint::operator>>=(unsigned int i) {
     *(this) = *(this) >> i;
     return *(this);
 }
-        
+
 bigint bigint::operator>>=(const bigint i) {
     *(this) = *(this) >> strToInt(i.arb);
     return *(this);
+}
+
+bool bigint::operator<(const bigint &src) const {
+    return (strToInt(this->arb) < strToInt(src.arb));
+}
+bool bigint::operator>(const bigint &src) const {
+    return !(*this < src) && !(*this == src);
+}
+bool bigint::operator==(const bigint &src) const {
+    return (this->arb == src.arb);
+}
+bool bigint::operator!=(const bigint &src) const {
+    return !(*this == src);
+}
+bool bigint::operator<=(const bigint &src) const {
+    return (*this < src || *this == src);
+}
+bool bigint::operator>=(const bigint &src) const {
+    return !(*this < src);
 }
 
 std::ostream &operator<<(std::ostream &os, const bigint &src) {
