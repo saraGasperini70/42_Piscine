@@ -1,6 +1,9 @@
 #ifndef BSQ_H
 # define BSQ_H
 
+# include <stdio.h>
+#include <stdlib.h>
+
 struct types {
     int lines;
     char empty;
@@ -11,11 +14,19 @@ struct types {
 struct map {
     int width;
     int height;
+    char **map;
+};
+
+struct square {
+    int x;
+    int y;
+    int size;
 };
 
 struct bsq {
-    map *map;
-    types *types;
+    struct map *map;
+    struct types *types;
+    struct square *square;
 };
 
 #endif
