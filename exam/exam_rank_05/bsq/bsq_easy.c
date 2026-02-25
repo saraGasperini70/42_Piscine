@@ -20,13 +20,18 @@ static void free_map(char **map, int h) {
     free(map);
 }
 
+/* Error printer */
+void print_err() {
+    fprintf(stderr, "map error\n");
+}
+
 int main(int ac, char **av) {
     /* If a filename is provided open it, otherwise read from stdin. */
     FILE *file = stdin;
     if (ac == 2) {
         file = fopen(av[1], "r");
         if (!file) {
-            fprintf(stderr, "map error\n");
+            print_err();
             return 1;
         }
     }
@@ -36,24 +41,19 @@ int main(int ac, char **av) {
     char empty, obstacle, full;
     if (fscanf(file, "%d %c %c %c", &height, &empty, &obstacle, &full) != 4) {
         /* Invalid header */
-        fprintf(stderr, "map error\n");
+        print_err();
         if (file != stdin) fclose(file);
         return 1;
     }
 
-    /* Consume remaining characters on the header line up to newline.
-       This ensures the next getline() call reads the first map row. */
-    int ch;
-    while ((ch = fgetc(file)) != '\n' && ch != EOF) ;
-
     /* Basic header validation to keep the simplified constraints. */
     if (height <= 0 || height > 100) {
-        fprintf(stderr, "map error\n");
+        print_err();
         if (file != stdin) fclose(file);
         return 1;
     }
     if (empty == obstacle || empty == full || obstacle == full) {
-        fprintf(stderr, "map error\n");
+        print_err();
         if (file != stdin) fclose(file);
         return 1;
     }
@@ -64,7 +64,7 @@ int main(int ac, char **av) {
     size_t len = 0;
     ssize_t nread = getline(&line, &len, file);
     if (nread == -1) {
-        fprintf(stderr, "map error\n");
+        print_err();
         free(line);
         if (file != stdin) fclose(file);
         return 1;
@@ -72,7 +72,7 @@ int main(int ac, char **av) {
     if (line[nread-1] == '\n') nread--;
     int width = (int)nread;
     if (width <= 0 || width > 100) {
-        fprintf(stderr, "map error\n");
+        print_err();
         free(line);
         if (file != stdin) fclose(file);
         return 1;
@@ -81,7 +81,7 @@ int main(int ac, char **av) {
     /* Allocate array of row pointers. Each row will be allocated separately. */
     char **map = malloc(sizeof(char*) * height);
     if (!map) {
-        fprintf(stderr, "map error\n");
+        print_err();
         free(line);
         if (file != stdin) fclose(file);
         return 1;
@@ -89,7 +89,7 @@ int main(int ac, char **av) {
 
     /* Store first read line into map[0] (copy contents). */
     map[0] = malloc(width + 1);
-    if (!map[0]) { free_map(map, 1); free(line); if (file!=stdin) fclose(file); fprintf(stderr, "map error\n"); return 1; }
+    if (!map[0]) { free_map(map, 1); free(line); if (file!=stdin) fclose(file); print_err(); return 1; }
     for (int j = 0; j < width; j++) map[0][j] = line[j];
     map[0][width] = '\0';
 
@@ -98,17 +98,17 @@ int main(int ac, char **av) {
         nread = getline(&line, &len, file);
         if (nread == -1) {
             /* Missing lines or read error */
-            fprintf(stderr, "map error\n");
+            print_err();
             free_map(map, i); free(line); if (file!=stdin) fclose(file); return 1;
         }
         if (line[nread-1] == '\n') nread--;
         if ((int)nread != width) {
             /* Inconsistent width */
-            fprintf(stderr, "map error\n");
+            print_err();
             free_map(map, i); free(line); if (file!=stdin) fclose(file); return 1;
         }
         map[i] = malloc(width + 1);
-        if (!map[i]) { free_map(map, i); free(line); if (file!=stdin) fclose(file); fprintf(stderr, "map error\n"); return 1; }
+        if (!map[i]) { free_map(map, i); free(line); if (file!=stdin) fclose(file); print_err(); return 1; }
         for (int j = 0; j < width; j++) map[i][j] = line[j];
         map[i][width] = '\0';
     }
@@ -123,7 +123,7 @@ int main(int ac, char **av) {
             char c = map[i][j];
             if (c != empty && c != obstacle) {
                 free_map(map, height);
-                fprintf(stderr, "map error\n");
+                print_err();
                 return 1;
             }
         }
@@ -132,7 +132,7 @@ int main(int ac, char **av) {
     /* Use a single flattened DP array sized height*width to compute largest
        square ending at each cell. dp[i*width + j] stores the size. */
     int *dp = malloc(sizeof(int) * height * width);
-    if (!dp) { free_map(map, height); fprintf(stderr, "map error\n"); return 1; }
+    if (!dp) { free_map(map, height); print_err(); return 1; }
     for (int i = 0; i < height * width; i++) dp[i] = 0;
 
     int best_size = 0;
