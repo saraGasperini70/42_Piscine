@@ -69,6 +69,13 @@ std::string bigint::getArb() const {
     return this->arb;
 }
 
+bigint &bigint::operator=(const bigint &src) {
+    if (this != &src) {
+        this->arb = src.arb;
+    }
+    return *this;
+}
+
 bigint &bigint::operator+=(const bigint &src) {
     this->arb = addition(this->arb, src.arb);
     return *this;

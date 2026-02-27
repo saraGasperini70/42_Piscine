@@ -15,6 +15,7 @@ class bigint {
         bigint(int i);
         ~bigint();
         std::string getArb() const;
+        bigint &operator=(const bigint &src);
         bigint operator+(const bigint &src) const;
         bigint &operator+=(const bigint &src);
         bigint &operator++();
