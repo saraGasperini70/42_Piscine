@@ -48,7 +48,7 @@ int main (int ac, char **av) {
                 int neighbors = 0;
                 if (map[i - 1][j] == alive || map[i + 1][j] == alive
                 || map[i][j + 1] == alive || map[i][j - 1] == alive
-                || map[i - 1][j - 1] == alive || map[i + 1][j - 1] == alive
+                || map[i - 1][j - 1] == alive || map[i + 1][j + 1] == alive
                 || map[i + 1][j + 1] == alive || map[i - 1][j - 1] == alive) neighbors++;
                 if (neighbors < 2 || neighbors > 3) map[i][j] = dead;
                 else if ((neighbors == 2 && map[i][j] == alive) || neighbors == 3) map[i][j] = alive;
@@ -56,7 +56,7 @@ int main (int ac, char **av) {
             }
         }
         free(map);
-        tmp = map;
+        map = temp;
     }
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) putchar(map[i][j] == 1 ? 'O' : ' ');
