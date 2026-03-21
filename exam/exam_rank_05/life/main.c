@@ -30,7 +30,7 @@ int main(int ac, char **av) {
     width = atoi(av[1]);
     height = atoi(av[2]);
     iterations = atoi(av[3]);
-    char alive = '0';
+    char alive = 'O';
     char dead = ' ';
     if (width <= 0 || height <= 0 || iterations < 0) return 1;
     char **map = alloc_map(height, width);
