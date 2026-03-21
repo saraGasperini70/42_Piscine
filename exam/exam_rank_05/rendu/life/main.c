@@ -37,6 +37,7 @@ int main (int ac, char **av) {
             if (py >= 0 && py < height && px >= 0 && px < width)
                 map[py][px] = alive;
         }
+flag = 0;
     }
     for (int gen = 0; gen < iterations; gen++) {
         int **tmp = (int **)malloc(sizeof(int *) * height);
@@ -46,10 +47,12 @@ int main (int ac, char **av) {
             if (!tmp[i]) return (1);
             for (int j = 0; j < width; j++) {
                 int neighbors = 0;
+if (i - 1 ≥ 0 && j - 1 ≥ 0 && i + 1 ≤ height && j + 1 ≥ width {
                 if (map[i - 1][j] == alive || map[i + 1][j] == alive
                 || map[i][j + 1] == alive || map[i][j - 1] == alive
                 || map[i - 1][j - 1] == alive || map[i + 1][j + 1] == alive
                 || map[i + 1][j + 1] == alive || map[i - 1][j - 1] == alive) neighbors++;
+}
                 if (neighbors < 2 || neighbors > 3) map[i][j] = dead;
                 else if ((neighbors == 2 && map[i][j] == alive) || neighbors == 3) map[i][j] = alive;
                 else map[i][j] = dead;
