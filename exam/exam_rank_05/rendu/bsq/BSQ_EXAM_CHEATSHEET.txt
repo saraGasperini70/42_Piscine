@@ -1,0 +1,22 @@
+# Biggest Square Problem Exam Preparation Notes
+
+## Key Concepts to Remember:
+1. **Understanding the Problem**: Know that the biggest square problem involves finding the maximum square area that can fit within a binary matrix represented by 0s (empty) and 1s (filled).
+
+2. **Dynamic Programming Approach**: Remember that a dynamic programming approach is often used:
+   - Define a DP matrix where `dp[i][j]` represents the size of the biggest square whose bottom-right corner is at `(i, j)`.
+   - Transition: If `matrix[i][j] == 1`, then `dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1`.
+   - Keep track of the maximum size found during the computation.
+
+3. **Boundary Conditions**: Handle the first row and first column separately, as they cannot form squares larger than `1`.
+
+4. **Time Complexity**: Be aware that this algorithm runs in O(n * m) time complexity, where `n` is the number of rows and `m` is the number of columns of the matrix.
+
+5. **Edge Cases**: Remember to consider edge cases, such as an empty matrix or matrices filled exclusively with zeroes or ones.
+
+## Tips for Managing Stress During the Exam:
+- **Stay Calm**: Take deep breaths and remind yourself that you prepared for this.
+- **Read Questions Carefully**: Ensure you understand what is being asked before diving into coding.
+- **Plan Your Approach**: Before writing code, outline your approach on paper if possible.
+- **Time Management**: Allocate time for each question and keep an eye on the clock. 
+- **Check Your Work**: If time permits, go back and review your solution to catch any mistakes.
