@@ -39,10 +39,10 @@ for map in $maps_path/*; do
 	fi
 	# Wait for the program to finish writing before checking:
 	wait
-	grep "definitely lost" valgrind_output.log | grep -v "All heap blocks were freed -- no leaks are possible" > /dev/null
-	if [ $? -ne 0 ]; then
-		echo "❌ failed for $map!"
+	
+	if grep -q "definitely lost: [1-9]" valgrind_output.log; then
+		echo "❌ leaks for $map!"
 	else
-		echo "✅ passed for $map!"
+		echo "✅ no definitte leaks for $map!"
 	fi
 done
