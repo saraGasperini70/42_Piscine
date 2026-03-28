@@ -1,0 +1,68 @@
+# Conway's Game of Life Exam Preparation Notes
+
+## Problem Overview
+Conway's Game of Life is a cellular automaton where cells on a grid evolve based on simple rules. You need to simulate the evolution of a grid for a given number of iterations based on neighbor counts.
+
+## Critical Rules to Remember (MUST GET RIGHT):
+1. **Any live cell with 2 or 3 live neighbors survives**
+2. **Any dead cell with exactly 3 live neighbors becomes alive**
+3. **All other cells die or stay dead** (underpopulation < 2, overpopulation > 3)
+
+## Step-by-Step Implementation Approach:
+
+### 1. Input Handling (CRITICAL IN EXAMS)
+- Take 3 command-line arguments: width, height, iterations
+- Read commands from stdin to populate initial grid:
+  - 'x': Toggle pen mode (on/off)
+  - 'w', 'a', 's', 'd': Move cursor (up, left, down, right)
+  - When pen is ON, mark cells as alive
+- DO NOT use tail -f or infinite loops! This will FAIL evaluation
+
+### 2. Grid Initialization
+Create 2D array for current state and initialize all cells to 0 (dead)
+
+### 3. Neighbor Counting Function (MOST IMPORTANT)
+- Count alive neighbors in 8 directions (include diagonals!)
+- Bounds check: only count if neighbor is within grid boundaries
+- Exclude the cell itself (i, j)
+
+### 4. Evolution Loop (PER ITERATION)
+- Create temporary board to hold next generation
+- For each cell (i, j):
+  - Count neighbors
+  - Apply rules:
+    - If neighbors == 3: cell becomes alive
+    - If neighbors == 2 AND cell was alive: cell stays alive
+    - Else: cell dies
+- Copy temp board to main board
+- Free old board, use new one
+
+### 5. Output
+- Print final board after all iterations
+- Use consistent character: '0' or 'x' for alive, ' ' (space) for dead
+
+## Common Pitfalls to Avoid (EXAM KILLER MISTAKES):
+
+1. BOUNDARY CHECKING: Forgetting to check if neighbors are within grid bounds
+2. USING WRONG BOARD: Applying rules while modifying the same board
+3. OFF-BY-ONE ERRORS: Check cursor movement bounds carefully
+4. MEMORY LEAKS: Free old board when replacing with new one
+5. PEN STATE LOGIC: Only mark cells when pen is actively ON
+
+## Memory Management Checklist:
+- Allocate board with 2D array
+- Free each row before freeing array pointer
+- Create and destroy temp board in each iteration
+- Free final board before exit
+
+## Testing Under Pressure:
+- Test with small grids (3x3, 4x4) first
+- Manually trace through 1-2 iterations to verify logic
+- Check that unstable patterns change correctly
+- Verify that stable patterns (blocks) don't change
+
+## Red Flags During Exam:
+- If your output looks random instead of evolving: neighbor counting bug
+- If cells don't change: board replacement bug
+- If cursor doesn't move correctly: bounds checking issue
+- If program crashes: memory access error or null pointer
