@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 
 int **malloc_2d_array(int height, int width, int need_init) {
     int **array = (int **)malloc(sizeof(int *) * height);
