@@ -240,11 +240,7 @@ int main(int ac, char **av)
 	int fd;
 	int client_fd;
 
-	if (ac != 2)
-	{
-		write(2, "Wrong number of arguments\n", 26);
-		exit(1);
-	}
+	if (ac != 2) ft_err("Wrong number of arguments");
 	FD_ZERO(&all);
 	bzero(&addr, sizeof(addr));
 	make_socket();
