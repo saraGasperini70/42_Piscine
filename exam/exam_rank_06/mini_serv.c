@@ -1,362 +1,155 @@
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/socket.h>
+#include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-/*
-** Subject constraints:
-** - one file: mini_serv.c
-** - no #define allowed -> use enum constants
-*/
-enum { MAX_FD = 65536, BUF_SIZE = 1000 };
+int max_fd = 0;
+int count = 0;
+int ids[65000];
+char *msgs[65000];
+fd_set rfds, wfds, afds;
+char buf_read[1001];
+char buf_write[100];
 
-/*
-** Global server state
-** - sockfd: listening socket
-** - max_fd: highest fd currently tracked (for select)
-** - next_id: incremental client id (0,1,2,...)
-** - ids[fd]: client id associated with fd
-** - inbuf[fd]: accumulated incoming data not fully processed yet
-** - outbuf[fd]: queued outgoing data not fully sent yet
-** - all: master fd set (listening + connected clients)
-*/
-int     sockfd;
-int     max_fd;
-int     next_id;
-int     ids[MAX_FD];
-char    *inbuf[MAX_FD];
-char    *outbuf[MAX_FD];
-fd_set  all, readfds, writefds;
+int extract_message(char **buf, char **msg) {
+  char *newbuf;
+  int i;
 
-/* Forward declaration (used by flush_client on send failure). */
-void    remove_client(int fd);
+  *msg = 0;
+  if (*buf == 0) return (0);
+  i = 0;
+  while ((*buf)[i]) {
+    if ((*buf)[i] == '\n') {
+      newbuf = calloc(1, sizeof(*newbuf) * (strlen(*buf + i + 1) + 1));
+      if (newbuf == 0) return (-1);
+      strcpy(newbuf, *buf + i + 1);
+      *msg = *buf;
+      (*msg)[i + 1] = 0;
+      *buf = newbuf;
+      return (1);
+    }
+    i++;
+  }
+  return (0);
+}
 
-/*
-** Print exact required errors and exit(1).
-** - If custom string provided, print it
-** - Else print "Fatal error"
-*/
-void    ft_err(char *str)
-{
-    if (str)
-        write(2, str, strlen(str));
-    else
-        write(2, "Fatal error", 11);
-    write(2, "\n", 1);
+char *str_join(char *buf, char *add) {
+  char *newbuf;
+  int len;
+
+  if (buf == 0)
+    len = 0;
+  else
+    len = strlen(buf);
+  newbuf = malloc(sizeof(*newbuf) * (len + strlen(add) + 1));
+  if (newbuf == 0) return (0);
+  newbuf[0] = 0;
+  if (buf != 0) strcat(newbuf, buf);
+  free(buf);
+  strcat(newbuf, add);
+  return (newbuf);
+}
+
+void fatal_error() {
+  write(2, "Fatal error\n", strlen("Fatal error\n"));
+  exit(1);
+}
+
+int make_socket() {
+  max_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (max_fd < 0) fatal_error();
+  FD_SET(max_fd, &afds);
+  return max_fd;
+}
+
+void notify(int author, char *msg) {
+  for (int fd = 0; fd <= max_fd; fd++) {
+    if (FD_ISSET(fd, &wfds) && fd != author) send(fd, msg, strlen(msg), 0);
+  }
+}
+
+void make_client(int fd) {
+  max_fd = fd > max_fd ? fd : max_fd;
+  FD_SET(fd, &afds);
+  ids[fd] = count++;
+  msgs[fd] = NULL;
+  sprintf(buf_write, "server: client %d just arrived\n", ids[fd]);
+  notify(fd, buf_write);
+}
+
+void remove_client(int fd) {
+  sprintf(buf_write, "server: client %d just left\n", ids[fd]);
+  notify(fd, buf_write);
+  free(msgs[fd]);
+  FD_CLR(fd, &afds);
+  close(fd);
+}
+
+void send_msg(int fd) {
+  char *msg;
+  while (extract_message(&(msgs[fd]), &msg)) {
+    sprintf(buf_write, "client %d: ", ids[fd]);
+    notify(fd, buf_write);
+    notify(fd, msg);
+    free(msg);
+  }
+}
+
+int main(int ac, char **av) {
+  if (ac != 2) {
+    write(2, "Wrong number of arguments\n",
+          strlen("Wrong number of arguments\n"));
     exit(1);
-}
+  }
 
-/*
-** Allocate and return concatenation of s1 + s2.
-** Returns NULL on allocation failure.
-*/
-char    *join(char *s1, char *s2)
-{
-    size_t  l1 = s1 ? strlen(s1) : 0;
-    size_t  l2 = s2 ? strlen(s2) : 0;
-    char    *res = calloc(1, l1 + l2 + 1);
+  FD_ZERO(&afds);
 
-    if (!res)
-        return NULL;
-    if (s1)
-        strcpy(res, s1);
-    if (s2)
-        strcat(res, s2);
-    return res;
-}
+  struct sockaddr_in servaddr;
+  bzero(&servaddr, sizeof(servaddr));
 
-/*
-** Extract one full line ending with '\n' from *buf.
-**
-** Example:
-**   *buf = "abc\ndef\nxyz"
-**   -> msg = "abc\n", *buf becomes "def\nxyz", returns 1
-**
-** Returns:
-**   1  -> one message extracted
-**   0  -> no full line yet
-**  -1  -> allocation failure
-*/
-int     extract_message(char **buf, char **msg)
-{
-    char    *nl;
-    char    *rest;
-    size_t  prefix_len;
-    size_t  rest_len;
+  servaddr.sin_family = AF_INET;
+  servaddr.sin_addr.s_addr = htonl(2130706433);  // 127.0.0.1
+  servaddr.sin_port = htons(atoi(av[1]));
 
-    *msg = NULL;
-    if (!buf || !*buf)
-        return 0;
-    nl = strstr(*buf, "\n");
-    if (!nl)
-        return 0;
+  int sockfd = make_socket();
 
-    prefix_len = (size_t)(nl - *buf);
-    rest_len = strlen(nl + 1);
+  if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) !=
+      0) {
+    fatal_error();
+  }
+  if (listen(sockfd, 100) != 0) {
+    fatal_error();
+  }
 
-    *nl = '\0';
-    *msg = calloc(1, prefix_len + 2);   /* + '\n' + '\0' */
-    rest = calloc(1, rest_len + 1);
-    if (!*msg || !rest)
-    {
-        free(*msg);
-        free(rest);
-        *msg = NULL;
-        *nl = '\n';
-        return -1;
-    }
+  while (1) {
+    rfds = wfds = afds;
+    if (select(max_fd + 1, &rfds, &wfds, NULL, NULL) < 0) fatal_error();
 
-    strcpy(*msg, *buf);
-    strcat(*msg, "\n");
-    strcpy(rest, nl + 1);
+    for (int fd = 0; fd <= max_fd; fd++) {
+      if (FD_ISSET(fd, &rfds) == 0) continue;
 
-    free(*buf);
-    *buf = rest;
-    return 1;
-}
-
-/*
-** Append 'msg' to outbuf[fd].
-** Uses temp pointer to avoid memory leaks on replacement.
-*/
-void    queue_message(int fd, char *msg)
-{
-    char    *tmp = join(outbuf[fd], msg);
-
-    if (!tmp)
-        ft_err(NULL);
-    free(outbuf[fd]);
-    outbuf[fd] = tmp;
-}
-
-/*
-** Queue a message to all connected clients except:
-** - the listening socket
-** - the author (sender)
-*/
-void    broadcast_others(int author, char *msg)
-{
-    int fd;
-
-    for (fd = 0; fd <= max_fd; fd++)
-    {
-        if (fd != sockfd && fd != author && FD_ISSET(fd, &all))
-            queue_message(fd, msg);
-    }
-}
-
-/*
-** Try to send queued output for one client.
-**
-** Behavior:
-** - If all queued data sent: clear outbuf[fd]
-** - If partial send: keep unsent tail in outbuf[fd]
-** - If send <= 0: treat as disconnected and remove client
-**
-** Important for subject:
-** - Do NOT disconnect lazy clients just because they are slow.
-** - Keep pending data and retry later when writable.
-*/
-void    flush_client(int fd)
-{
-    int     sent;
-    size_t  len;
-    char    *rest;
-
-    while (outbuf[fd])
-    {
-        len = strlen(outbuf[fd]);
-        sent = send(fd, outbuf[fd], len, 0);
-        if (sent <= 0)
-        {
-            remove_client(fd);
-            return;
+      if (fd == sockfd) {
+        socklen_t addr_len = sizeof(servaddr);
+        int client_id = accept(sockfd, (struct sockaddr *)&servaddr, &addr_len);
+        if (client_id >= 0) {
+          make_client(client_id);
+          break;
         }
-        if ((size_t)sent == len)
-        {
-            free(outbuf[fd]);
-            outbuf[fd] = NULL;
-            return;
+      } else {
+        int read_bytes = recv(fd, buf_read, 1000, 0);
+        if (read_bytes <= 0) {
+          remove_client(fd);
+          break;
         }
-
-        rest = calloc(1, len - (size_t)sent + 1);
-        if (!rest)
-            ft_err(NULL);
-        strcpy(rest, outbuf[fd] + sent);
-        free(outbuf[fd]);
-        outbuf[fd] = rest;
+        buf_read[read_bytes] = '\0';
+        msgs[fd] = str_join(msgs[fd], buf_read);
+        send_msg(fd);
+      }
     }
-}
-
-/*
-** Remove one client:
-** - announce departure to others
-** - free client buffers
-** - remove fd from master set
-** - close fd
-*/
-void    remove_client(int fd)
-{
-    char msg[64];
-
-    sprintf(msg, "server: client %d just left\n", ids[fd]);
-    broadcast_others(fd, msg);
-
-    free(inbuf[fd]);
-    free(outbuf[fd]);
-    inbuf[fd] = NULL;
-    outbuf[fd] = NULL;
-
-    FD_CLR(fd, &all);
-    close(fd);
-}
-
-/*
-** Register new client:
-** - track fd in master set
-** - assign id
-** - init buffers
-** - announce arrival to others
-*/
-void    add_client(int fd)
-{
-    char msg[64];
-
-    if (fd > max_fd)
-        max_fd = fd;
-    FD_SET(fd, &all);
-
-    ids[fd] = next_id++;
-    inbuf[fd] = NULL;
-    outbuf[fd] = NULL;
-
-    sprintf(msg, "server: client %d just arrived\n", ids[fd]);
-    broadcast_others(fd, msg);
-}
-
-/*
-** Read incoming bytes from one client and process complete lines.
-**
-** Steps:
-** 1) recv chunk
-** 2) append chunk to inbuf[fd]
-** 3) extract each full line ending in '\n'
-** 4) broadcast each line as "client <id>: <line>"
-**
-** "As fast as possible" requirement is satisfied by immediate line forwarding.
-*/
-void    handle_read(int fd)
-{
-    char    buf[BUF_SIZE + 1];
-    int     n;
-    char    *tmp;
-    char    *msg;
-    char    *line;
-    char    prefix[64];
-    int     status;
-
-    n = recv(fd, buf, BUF_SIZE, 0);
-    if (n <= 0)
-    {
-        remove_client(fd);
-        return;
-    }
-    buf[n] = '\0';
-
-    /* Leak-safe append (fix vs direct inbuf[fd] = join(...)). */
-    tmp = join(inbuf[fd], buf);
-    if (!tmp)
-        ft_err(NULL);
-    free(inbuf[fd]);
-    inbuf[fd] = tmp;
-
-    while (1)
-    {
-        status = extract_message(&inbuf[fd], &msg);
-        if (status < 0)
-            ft_err(NULL);
-        if (status == 0)
-            break;
-
-        sprintf(prefix, "client %d: ", ids[fd]);
-        line = join(prefix, msg);
-        if (!line)
-            ft_err(NULL);
-
-        broadcast_others(fd, line);
-
-        free(line);
-        free(msg);
-    }
-}
-
-int     main(int ac, char **av)
-{
-    struct sockaddr_in  addr;
-    int                 fd;
-    int                 cfd;
-    socklen_t           alen;
-
-    if (ac != 2)
-        ft_err("Wrong number of arguments");
-
-    FD_ZERO(&all);
-    memset(&addr, 0, sizeof(addr));
-
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        ft_err(NULL);
-
-    FD_SET(sockfd, &all);
-    max_fd = sockfd;
-
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(2130706433); /* 127.0.0.1 */
-    addr.sin_port = htons(atoi(av[1]));
-
-    if (bind(sockfd, (const struct sockaddr *)&addr, sizeof(addr)) < 0)
-        ft_err(NULL);
-    if (listen(sockfd, 100) < 0)
-        ft_err(NULL);
-
-    /*
-    ** Main event loop:
-    ** - select() tells which fds are readable/writable now
-    ** - readable server fd => accept new client
-    ** - readable client fd => recv and parse lines
-    ** - writable client fd with pending outbuf => flush queued output
-    */
-    while (1)
-    {
-        readfds = all;
-        writefds = all;
-
-        if (select(max_fd + 1, &readfds, &writefds, NULL, NULL) < 0)
-            ft_err(NULL);
-
-        for (fd = 0; fd <= max_fd; fd++)
-        {
-            if (!FD_ISSET(fd, &readfds))
-                continue;
-
-            if (fd == sockfd)
-            {
-                alen = sizeof(addr);
-                cfd = accept(sockfd, (struct sockaddr *)&addr, &alen);
-                if (cfd >= 0)
-                    add_client(cfd);
-            }
-            else
-                handle_read(fd);
-        }
-
-        for (fd = 0; fd <= max_fd; fd++)
-        {
-            if (fd != sockfd && FD_ISSET(fd, &writefds) && outbuf[fd])
-                flush_client(fd);
-        }
-    }
-    return 0;
+  }
+  return 0;
 }
