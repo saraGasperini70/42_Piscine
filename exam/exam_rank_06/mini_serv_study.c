@@ -7,10 +7,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
-int max_fd = 0, count = 0, clients[65000];
-fd_set readfds, writefds, all;
-char read_buf[1001], write_buf[1001], *msgs[65000];
+int clients[65000];
+char *msgs[65000];
+fd_set all, writefds, readfds;
+int max_fd = 0, count = 0;
+char buf_write[1001], buf_read[1001];
 
 int extract_message(char **buf, char **msg)
 {
@@ -75,61 +76,67 @@ int make_socket() {
 
 void notify(int author, char *msg) {
 	for (int fd = 0; fd <= max_fd; fd++) {
-		if (FD_ISSET(fd, &writefds) && fd != author) send(fd, msg, strlen(msg), 0);
+		if (FD_ISSET(fd, &writefds) && fd != author) send(fd, &msg, strlen(msg), 0);
 	}
 }
 
-void make_client(int fd) {
-	max_fd = fd > max_fd ? fd : max_fd;
-	FD_SET(fd, &all);
-	clients[fd] = count++;
-	msgs[fd] = NULL;
-	sprintf(write_buf, "server: client %d just arrived\n", clients[fd]);
-	notify(fd, write_buf);
+void make_client(int client_id) {
+	max_fd = client_id > max_fd ? client_id : max_fd;
+	FD_SET(client_id, &all);
+	clients[client_id] = count++;
+	msgs[client_id] = NULL;
+	sprintf(buf_write, "server: client %d just arrived\n", clients[client_id]);
+	notify(client_id, buf_write);
 }
 
-void remove_client(int fd) {
-	sprintf(write_buf, "server: client %d just left\n", clients[fd]);
-	notify(fd, write_buf);
-	free(msgs[fd]);
-	FD_CLR(fd, &all);
-	close(fd);
+void remove_client(int client_id) {
+	sprintf(buf_write, "server: client %d just left\n", clients[client_id]);
+	notify(client_id, buf_write);
+	free(msgs[client_id]);
+	FD_CLR(client_id, &all);
+	close(client_id);
 }
 
-void send_msg(int fd) {
+void send_msg(int client_id) {
 	char *msg;
-	while(extract_message(&(msgs[fd]), &msg)) {
-		sprintf(write_buf, "client %d: ", clients[fd]);
-		notify(fd, write_buf);
-		notify(fd, msg);
+	while (extract_message(&(msgs[client_id]), &msg)) {
+		sprintf(buf_write, "client %d: ", clients[client_id]);
+		notify(client_id, buf_write);
+		notify(client_id, msg);
 		free(msg);
 	}
 }
 
+void debug(char *msg) {
+	write(1, msg, strlen(msg));
+	write(1, "\n", 1);
+}
+
 int main(int ac, char **av) {
-	int sockfd;
-	struct sockaddr_in servaddr; 
+	struct sockaddr_in servaddr;
 
+	// Check arguments
 	if (ac != 2) ft_err("Wrong number of arguments");
-	
+
 	FD_ZERO(&all);
-	bzero(&servaddr, sizeof(servaddr)); 
+	bzero(&servaddr, sizeof(servaddr));
 
-	// assign IP, PORT 
-	servaddr.sin_family = AF_INET; 
+	// assign IP, PORT
+	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
-	servaddr.sin_port = htons(atoi(av[1])); 
+	servaddr.sin_port = htons(atoi(av[1]));
 
-	// Socket creation
-	sockfd = make_socket();
-  
-	// Binding newly created socket to given IP and verification 
+	// socket create and verification
+	int sockfd = make_socket();
+
+	// Binding newly created socket to given IP and verification
+	debug("Binding socket...");
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0) ft_err(NULL);
+	debug("Success. Socket listening...");
 	if (listen(sockfd, 100) != 0) ft_err(NULL);
-	
-	write(1, "Ready.\n", strlen("Ready.\n"));
-	// Main loop
-	while(1) {
+	debug("Done.");
+
+	while (1) {
 		readfds = writefds = all;
 		if (select(max_fd + 1, &readfds, &writefds, NULL, NULL) < 0) ft_err(NULL);
 		for (int fd = 0; fd <= max_fd; fd++) {
@@ -142,17 +149,16 @@ int main(int ac, char **av) {
 					break;
 				}
 			} else {
-				int read_bytes = recv(fd, &read_buf, 1000, 0);
-				if (read_bytes <= 0) {
-					remove_client(fd);
-					break;
+					int read_bytes = recv(fd, buf_read, 1000, 0);
+					if (read_bytes <= 0) {
+						remove_client(fd);
+						break;
+					}
+					buf_read[read_bytes] = '\0';
+					msgs[fd] = str_join(msgs[fd], buf_read);
+					send_msg(fd);
 				}
-				read_buf[read_bytes] = '\0';
-				msgs[fd] = str_join(msgs[fd], read_buf);
-				send_msg(fd);
 			}
 		}
-
-	}
 	return (0);
 }

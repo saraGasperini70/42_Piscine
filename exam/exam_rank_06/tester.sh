@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-SRC="$ROOT_DIR/mini_serv.c"
+SRC="$ROOT_DIR/mini_serv-2.c"
 TMP_DIR=$(mktemp -d)
 BIN="$TMP_DIR/mini_serv"
 SLOW_SRC="$TMP_DIR/slow_client.c"
@@ -39,7 +39,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 need_cmd() {
-	command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
+	command -v "wsl $1" >/dev/null 2>&1 || fail "missing required command: $1"
 }
 
 assert_eq() {

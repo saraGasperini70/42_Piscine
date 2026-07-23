@@ -108,25 +108,25 @@ void send_msg(int fd) {
 
 int main(int ac, char **av) {
 	int sockfd;
-	struct sockaddr_in servaddr; 
+	struct sockaddr_in servaddr;
 
 	if (ac != 2) ft_err("Wrong number of arguments");
-	
-	FD_ZERO(&all);
-	bzero(&servaddr, sizeof(servaddr)); 
 
-	// assign IP, PORT 
-	servaddr.sin_family = AF_INET; 
+	FD_ZERO(&all);
+	bzero(&servaddr, sizeof(servaddr));
+
+	// assign IP, PORT
+	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
-	servaddr.sin_port = htons(atoi(av[1])); 
+	servaddr.sin_port = htons(atoi(av[1]));
 
 	// Socket creation
 	sockfd = make_socket();
-  
-	// Binding newly created socket to given IP and verification 
+
+	// Binding newly created socket to given IP and verification
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0) ft_err(NULL);
 	if (listen(sockfd, 100) != 0) ft_err(NULL);
-	
+
 	write(1, "Ready.\n", strlen("Ready.\n"));
 	// Main loop
 	while(1) {
